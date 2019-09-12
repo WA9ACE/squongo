@@ -18,11 +18,12 @@ class Squongo::Connection
   end
 
   def self.connect(path)
-    self.new(path)
+    new(path)
   end
 
   def ensure_mode
     return unless first_connection
+
     wal_mode
   end
 
@@ -31,6 +32,6 @@ class Squongo::Connection
   end
 
   def first_connection
-    !(File.exist?(path))
+    !File.exist?(path)
   end
 end

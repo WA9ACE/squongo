@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'date'
 
 class Squongo::Document
@@ -12,13 +14,13 @@ class Squongo::Document
   end
 
   def save
-    Squongo.save({ table: table, data: data })
+    Squongo.save(id: id, table: table, data: data)
   end
 
   def self.from_row(fields)
     id, data, created_at, updated_at = fields
 
-    self.new(
+    new(
       data: JSON.parse(data),
       id: id,
       created_at: DateTime.parse(created_at),
@@ -35,26 +37,27 @@ class Squongo::Document
     field = set.keys.first
     value = set.values.first
     query = "SELECT * FROM #{table} WHERE json_extract(data, ?) = ?"
-    rows = Squongo.connection.db.execute(query, ["$.#{field.to_s}", value])
+    rows = Squongo.connection.db.execute(query, ["$.#{field}", value])
     documents = rows.map { |row| from_row(row) }
 
     return documents.first if documents.length == 1
+
     documents
   end
 
   def self.first
     Squongo.connection.db.execute("SELECT * FROM #{table} ORDER BY id LIMIT 1")
-      .map { |row| from_row(row) }.first
+           .map { |row| from_row(row) }.first
   end
 
   def self.last
     Squongo.connection.db.execute("SELECT * FROM #{table} ORDER BY id DESC LIMIT 1")
-      .map { |row| from_row(row) }.first
+           .map { |row| from_row(row) }.first
   end
 
   def self.all
     Squongo.connection.db.execute("SELECT * FROM #{table}")
-      .map { |row| from_row(row) }
+           .map { |row| from_row(row) }
   end
 
   def table
@@ -62,6 +65,6 @@ class Squongo::Document
   end
 
   def self.table
-    self.const_get :TABLE
+    const_get :TABLE
   end
 end

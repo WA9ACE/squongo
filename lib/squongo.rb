@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json'
 require 'base64'
 
@@ -9,7 +11,7 @@ require 'squongo/writer'
 
 module Squongo
   TABLES_QUERY = 'SELECT name FROM sqlite_master WHERE type="table";'
-  TABLE_SCHEMA = '(id INTEGER PRIMARY KEY, data JSON, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NULL);'
+  TABLE_SCHEMA = '(id INTEGER PRIMARY KEY, data JSON, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL);'
 
   def self.connect(path)
     @@connection = Connection.connect(path)
@@ -33,8 +35,8 @@ module Squongo
 
   def self.document_types
     ObjectSpace.each_object(Class)
-      .select { |klass| klass < Squongo::Document }
-      .map { |type| type.table }
+               .select { |klass| klass < Squongo::Document }
+               .map(&:table)
   end
 
   def self.tables

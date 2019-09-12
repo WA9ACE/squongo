@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Squongo::Writer
   attr_reader :reader, :writer
 
@@ -13,15 +15,32 @@ class Squongo::Writer
     while packet = @reader.gets
       model_information = Squongo.ipc_decode(packet)
 
+      id = model_information['id']
       table = model_information['table']
       data  = model_information['data']
 
-      insert(table, data)
+      if id.nil?
+        insert(table, data)
+      else
+        update(id, table, data)
+      end
     end
   end
 
+  def update(id, table, data)
+    Squongo.connection.db.execute(
+      "UPDATE #{table} SET data = json(?), updated_at = ? WHERE id = ?",
+      [data.to_json, Squongo.timestamp, id]
+    )
+  end
+
   def insert(table, data)
-    Squongo.connection.db.execute "INSERT INTO #{table} (data, updated_at) VALUES(?, ?)", data.to_json, Squongo.timestamp
+    timestamp = Squongo.timestamp
+
+    Squongo.connection.db.execute(
+      "INSERT INTO #{table} (data, created_at, updated_at) VALUES(?, ?, ?)",
+      [data.to_json, timestamp, timestamp]
+    )
   end
 
   def should_live
