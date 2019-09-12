@@ -22,7 +22,25 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```
+require 'squongo'
+
+class Post < Squongo::Document
+  TABLE = :posts
+end
+
+Squongo.connect('somefile.db')
+Squongo.start_writer
+
+post = Post.new title: 'example', text: 'lorem ipsum'
+post.save
+
+other_post = Post.find(1)
+other_post.data = { title: 'New Example' }
+other_post.save
+
+title_post = Post.find_by title: 'New Example'
+```
 
 ## Development
 
