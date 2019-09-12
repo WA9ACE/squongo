@@ -14,7 +14,12 @@ class Squongo::Document
   end
 
   def save
-    Squongo.save(id: id, table: table, data: data)
+    id = Squongo.save(id: id, table: table, data: data)
+    document = self.class.find(id)
+
+    @id = document.id
+    @created_at = document.created_at
+    @updated_at = document.updated_at
   end
 
   def self.from_row(fields)

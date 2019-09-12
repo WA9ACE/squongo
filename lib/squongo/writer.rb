@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
 class Squongo::Writer
-  attr_reader :reader, :writer
+  attr_reader :reader, :writer, :response_writer
 
-  def initialize(reader, writer, parent_pid)
+  def initialize(reader, writer, response_reader, response_writer, parent_pid)
     @reader = reader
     @writer = writer
+
+    @response_reader = response_reader
+    @response_writer = response_writer
+
     @parent_pid = parent_pid
   end
 
@@ -20,7 +24,8 @@ class Squongo::Writer
       data  = model_information['data']
 
       if id.nil?
-        insert(table, data)
+        id = insert(table, data)
+        respond(id)
       else
         update(id, table, data)
       end
@@ -41,6 +46,12 @@ class Squongo::Writer
       "INSERT INTO #{table} (data, created_at, updated_at) VALUES(?, ?, ?)",
       [data.to_json, timestamp, timestamp]
     )
+
+    Squongo.connection.db.last_insert_row_id
+  end
+
+  def respond(id)
+    response_writer.puts id
   end
 
   def should_live

@@ -54,6 +54,9 @@ module Squongo
 
   def self.save(model_information)
     @@writer.puts ipc_encode(model_information)
+
+    id = @@response_reader.gets
+    id.to_i
   end
 
   def self.ipc_encode(data)
@@ -66,7 +69,16 @@ module Squongo
 
   def self.start_writer
     @@reader, @@writer = IO.pipe
-    @@squongo_writer = Squongo::Writer.new(@@reader, @@writer, Process.pid)
+
+    @@response_reader, @@response_writer = IO.pipe
+
+    @@squongo_writer = Squongo::Writer.new(
+      @@reader,
+      @@writer,
+      @@response_reader,
+      @@response_writer,
+      Process.pid
+    )
 
     @@pid = fork do
       @@squongo_writer.start
