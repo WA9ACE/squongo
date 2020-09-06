@@ -14,6 +14,7 @@ class Squongo::Writer
   end
 
   def start
+    Squongo.connection.reconnect
     monitor_parent
 
     while packet = @reader.gets

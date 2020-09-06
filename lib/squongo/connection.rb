@@ -13,8 +13,13 @@ class Squongo::Connection
     ensure_mode
   end
 
+  def close
+    @db.close
+  end
+
   def reconnect
     @db = SQLite3::Database.open(path)
+    ensure_mode
   end
 
   def self.connect(path)
@@ -22,7 +27,7 @@ class Squongo::Connection
   end
 
   def ensure_mode
-    return unless first_connection
+    # return unless first_connection
 
     wal_mode
   end

@@ -11,7 +11,12 @@ require 'squongo/writer'
 
 module Squongo
   TABLES_QUERY = 'SELECT name FROM sqlite_master WHERE type="table";'
-  TABLE_SCHEMA = '(id INTEGER PRIMARY KEY, data JSON, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL);'
+  TABLE_SCHEMA = '(
+    id INTEGER PRIMARY KEY NOT NULL,
+    data JSON NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );'
 
   def self.connect(path)
     @@connection = Connection.connect(path)
@@ -80,9 +85,13 @@ module Squongo
       Process.pid
     )
 
+    Squongo.connection.close
+
     @@pid = fork do
       @@squongo_writer.start
     end
+
+    Squongo.reconnect
   end
 
   def self.timestamp

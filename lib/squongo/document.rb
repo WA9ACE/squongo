@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'date'
 
 class Squongo::Document
@@ -41,8 +39,27 @@ class Squongo::Document
   def self.find_by(set)
     field = set.keys.first
     value = set.values.first
-    query = "SELECT * FROM #{table} WHERE json_extract(data, ?) = ?"
-    rows = Squongo.connection.db.execute(query, ["$.#{field}", value])
+    query = "SELECT * FROM #{table} WHERE "
+
+    terms = paths(set)
+
+    terms.each_with_index do |term, index|
+      if index == 0
+        query << "json_extract(data, ?) = ? "
+      else
+        query << "AND json_extract(data, ?) = ? "
+      end
+    end
+
+    params = terms.map do |x|
+      if x[:value].is_a?(Array)
+        ["$.#{x[:path]}", "[#{x[:value] * ','}]"]
+      else
+        ["$.#{x[:path]}", x[:value]]
+      end
+    end.flatten(1)
+
+    rows = Squongo.connection.db.execute(query, params)
     documents = rows.map { |row| from_row(row) }
 
     return documents.first if documents.length == 1
@@ -71,5 +88,25 @@ class Squongo::Document
 
   def self.table
     const_get :TABLE
+  end
+
+  def self.descend(hash, acc: nil)
+    hash.map do |k, v|
+      if v.is_a? Hash
+        descend(v, acc: "#{acc}.#{k}")
+      else
+        path = "#{acc}.#{k}"
+        { path: path, value: v }
+      end
+    end
+  end
+  
+  def self.paths(hash)
+    descend(hash).flatten.map { |x|
+      {
+        path: x[:path][1..-1],
+        value: x[:value]
+      }
+    }
   end
 end
